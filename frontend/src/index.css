@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0a0a0b;
+}
+
+code { font-family: source-code-pro, Menlo, Monaco, Consolas, monospace; }
+
+.font-display { font-family: 'Anton', sans-serif; letter-spacing: 0.01em; }
+.font-heading { font-family: 'Oswald', sans-serif; }
+
+.text-gold { color: #E3B23C; }
+.bg-gold { background-color: #E3B23C; }
+.border-gold { border-color: #E3B23C; }
+
+.gold-gradient { background: linear-gradient(180deg, #F0C955 0%, #E3B23C 100%); }
+.hero-overlay { background: linear-gradient(180deg, rgba(10,10,11,0.72) 0%, rgba(10,10,11,0.85) 60%, #0a0a0b 100%); }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(24px);} to { opacity:1; transform: translateY(0);} }
+.animate-fade-up { animation: fadeUp 0.7s ease forwards; }
+
+@layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 45 74% 56%;
+    --primary-foreground: 0 0% 7%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 45 74% 56%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
