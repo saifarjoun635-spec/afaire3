@@ -198,7 +198,7 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
@@ -228,3 +228,17 @@ agent_communication:
       (8) Client access control (sees only own inspections, 403 for other client's inspections), (9) Access control (401 without token, 403 for unauthorized roles),
       (10) Quotes (public creation, admin listing, auth required), (11) Stats (admin access, all counts returned, auth required).
       All endpoints working correctly with proper authentication and authorization. No critical issues found.
+    -agent: "main"
+    -message: >
+      Quick regression test requested after small backend change. Focus on vehicle_type storage:
+      (1) POST /api/bookings with vehicle_type:"Véhicule Lourd" - verify stored as vehicle.type
+      (2) Admin login and GET /api/inspections - verify new booking appears with vehicle.type
+      (3) GET /api/inspections/available works
+    -agent: "testing"
+    -message: >
+      ✅ REGRESSION TEST COMPLETE - ALL 4 TESTS PASSED! Vehicle type storage verified successfully.
+      Tested: (1) POST /api/bookings with vehicle_type:"Véhicule Lourd" returns 200 with token + user{role:client} + inspection{status:paid},
+      vehicle.type correctly stored as "Véhicule Lourd" (verified in response), (2) Admin login successful (admin@torqueelite.com),
+      (3) GET /api/inspections as admin shows new booking with vehicle.type:"Véhicule Lourd" present and correct,
+      (4) GET /api/inspections/available returns 7 available inspections, all with status:paid and no assigned employee.
+      Backend change working correctly - vehicle_type field is properly stored as vehicle.type in inspection objects.

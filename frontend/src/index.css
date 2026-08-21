@@ -16,12 +16,12 @@ code { font-family: source-code-pro, Menlo, Monaco, Consolas, monospace; }
 .font-display { font-family: 'Anton', sans-serif; letter-spacing: 0.01em; }
 .font-heading { font-family: 'Oswald', sans-serif; }
 
-.text-gold { color: #E3B23C; }
-.bg-gold { background-color: #E3B23C; }
-.border-gold { border-color: #E3B23C; }
+.text-gold { color: #E11D2E; }
+.bg-gold { background-color: #E11D2E; }
+.border-gold { border-color: #E11D2E; }
 
-.gold-gradient { background: linear-gradient(180deg, #F0C955 0%, #E3B23C 100%); }
-.hero-overlay { background: linear-gradient(180deg, rgba(10,10,11,0.72) 0%, rgba(10,10,11,0.85) 60%, #0a0a0b 100%); }
+.gold-gradient { background: linear-gradient(180deg, #E5232F 0%, #B3121C 100%); }
+.hero-overlay { background: linear-gradient(180deg, rgba(8,8,9,0.74) 0%, rgba(8,8,9,0.88) 60%, #08080a 100%); }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

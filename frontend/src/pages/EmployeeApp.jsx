@@ -35,7 +35,7 @@ const EmployeeApp = () => {
       <header className="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 sticky top-0 z-30">
         <div className="flex items-center gap-2">
           <Menu size={20} className="text-gray-500" />
-          <span className="font-display text-lg"><span className="text-gold">TORQUE</span> <span className="text-gray-800">ÉLITE</span></span>
+          <span className="font-display text-lg"><span className="text-[#E11D2E]">INSPECTION</span> <span className="text-gray-900">MOBILE</span></span>
         </div>
         <button onClick={() => { logout(); navigate('/'); }} className="text-gray-400 hover:text-gray-700"><LogOut size={18} /></button>
       </header>
@@ -79,7 +79,7 @@ const EmployeeApp = () => {
           { k: 'history', label: 'Historique', icon: FolderOpen },
           { k: 'settings', label: 'Paramètres', icon: Settings },
         ].map((t) => (
-          <button key={t.k} onClick={() => setNav(t.k)} className={`flex flex-col items-center gap-0.5 text-[11px] ${nav === t.k ? 'text-blue-600' : 'text-gray-400'}`}>
+          <button key={t.k} onClick={() => setNav(t.k)} className={`flex flex-col items-center gap-0.5 text-[11px] ${nav === t.k ? 'text-[#E11D2E]' : 'text-gray-400'}`}>
             <t.icon size={20} /> {t.label}
           </button>
         ))}
@@ -89,7 +89,7 @@ const EmployeeApp = () => {
 };
 
 const EmptyState = ({ label }) => (
-  <div className="flex flex-col items-center justify-center py-24 text-blue-400">
+  <div className="flex flex-col items-center justify-center py-24 text-[#E11D2E]">
     <div className="w-16 h-16 rounded-full border-2 border-blue-300 flex items-center justify-center mb-4"><span className="text-3xl">!</span></div>
     <p className="font-heading tracking-wide text-sm">{label}</p>
   </div>
@@ -99,7 +99,7 @@ const CardEmp = ({ i, onClick }) => (
   <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-4 overflow-hidden">
     <div className="p-4">
       <div className="flex items-center justify-between mb-3">
-        <div className="w-8 h-8 rounded-full border-2 border-blue-400 flex items-center justify-center text-blue-500 font-heading text-sm">1</div>
+        <div className="w-8 h-8 rounded-full border-2 border-[#E11D2E] flex items-center justify-center text-[#E11D2E] font-heading text-sm">1</div>
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-sm">{i.service_type.split(' ')[0]}</span>
           <span className="bg-yellow-200 text-yellow-800 text-xs font-heading px-2 py-0.5 rounded">{i.status}</span>
@@ -114,7 +114,7 @@ const CardEmp = ({ i, onClick }) => (
       <p className="flex items-center gap-2 text-gray-700 text-sm"><Car size={15} className="text-gray-400" /> {i.vehicle.year} {i.vehicle.make} {i.vehicle.model}</p>
       <p className="flex items-center gap-2 text-gray-700 text-sm mt-1"><MapPin size={15} className="text-gray-400" /> {i.location.address}</p>
       <div className="flex justify-end mt-3">
-        <button onClick={onClick} className="bg-blue-600 text-white text-sm font-heading px-5 py-2 rounded hover:bg-blue-700 transition">DÉTAILS</button>
+        <button onClick={onClick} className="bg-[#E11D2E] text-white text-sm font-heading px-5 py-2 rounded hover:bg-[#B3121C] transition">DÉTAILS</button>
       </div>
     </div>
   </div>
@@ -173,7 +173,7 @@ const Detail = ({ inspection, onBack, refresh }) => {
           <div className="pt-2 border-t border-gray-100">
             <F label="Nom" value={i.contact.name} />
             <p className="text-green-700 text-sm font-medium mt-2">Téléphone</p>
-            <a href={`tel:${i.contact.phone}`} className="text-blue-600 text-sm flex items-center gap-1"><Phone size={13} /> {i.contact.phone}</a>
+            <a href={`tel:${i.contact.phone}`} className="text-[#E11D2E] text-sm flex items-center gap-1"><Phone size={13} /> {i.contact.phone}</a>
           </div>
         </Section>
 
@@ -202,7 +202,7 @@ const Detail = ({ inspection, onBack, refresh }) => {
                 <button onClick={() => delPhoto(p.id)} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1"><Trash2 size={12} /></button>
               </div>
             ))}
-            <button onClick={() => fileRef.current?.click()} className="h-24 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition">
+            <button onClick={() => fileRef.current?.click()} className="h-24 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center text-gray-400 hover:border-[#E11D2E] hover:text-[#E11D2E] transition">
               <Camera size={20} /><span className="text-xs mt-1">{uploading ? '...' : 'Ajouter'}</span>
             </button>
           </div>
@@ -212,10 +212,10 @@ const Detail = ({ inspection, onBack, refresh }) => {
         <Section title="Rapport & Statut">
           <div className="flex flex-wrap gap-2">
             {['scheduled', 'in_progress'].map((s) => (
-              <button key={s} onClick={() => setStatus(s)} className={`text-sm font-heading px-3 py-2 rounded border ${i.status === s ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 text-gray-600'}`}>{STATUS[s]?.label || s}</button>
+              <button key={s} onClick={() => setStatus(s)} className={`text-sm font-heading px-3 py-2 rounded border ${i.status === s ? 'bg-[#E11D2E] text-white border-blue-600' : 'border-gray-300 text-gray-600'}`}>{STATUS[s]?.label || s}</button>
             ))}
           </div>
-          <textarea value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} rows={4} placeholder="Notes du rapport d'inspection..." className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 focus:border-blue-500 outline-none resize-none" />
+          <textarea value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} rows={4} placeholder="Notes du rapport d'inspection..." className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 focus:border-[#E11D2E] outline-none resize-none" />
           <button onClick={finish} className="w-full flex items-center justify-center gap-2 bg-green-700 text-white font-heading py-3 rounded hover:bg-green-800 transition"><CheckCircle2 size={16} /> Compléter l'inspection</button>
           {i.status === 'completed' && <p className="text-green-700 text-sm text-center flex items-center justify-center gap-1"><CheckCircle2 size={14} /> Inspection complétée</p>}
         </Section>

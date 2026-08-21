@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Car, MapPin, Clock, Plus, ChevronRight, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import logo from '../assets/logo.png';
 
 export const STATUS = {
   paid: { label: 'Payé • En attente d\'assignation', color: 'bg-blue-500/15 text-blue-300' },
@@ -27,7 +28,7 @@ const ClientPortal = () => {
   return (
     <div className="min-h-screen bg-[#0a0a0b]">
       <header className="bg-[#141416] border-b border-white/10 px-5 lg:px-8 h-16 flex items-center justify-between">
-        <div className="font-display text-xl"><span className="text-gold">TORQUE</span> <span className="text-white">ÉLITE</span> <span className="text-white/40 text-sm font-heading ml-2">Portail Client</span></div>
+        <div className="flex items-center gap-3"><img src={logo} alt="Torque Inspection Mobile" className="h-9 w-auto" /> <span className="text-white/40 text-sm font-heading">Portail Client</span></div>
         <div className="flex items-center gap-4">
           <span className="text-white/60 text-sm hidden sm:block">{user?.name}</span>
           <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-1.5 text-white/60 hover:text-gold text-sm"><LogOut size={16} /> Déconnexion</button>
@@ -37,7 +38,7 @@ const ClientPortal = () => {
       <main className="max-w-4xl mx-auto px-5 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-heading text-2xl text-white">Mes inspections</h1>
-          <button onClick={() => navigate('/reserver')} className="flex items-center gap-1.5 gold-gradient text-[#141414] font-heading font-600 px-4 py-2.5 rounded-sm text-sm"><Plus size={16} /> Nouvelle inspection</button>
+          <button onClick={() => navigate('/reserver')} className="flex items-center gap-1.5 gold-gradient text-white font-heading font-600 px-4 py-2.5 rounded-sm text-sm"><Plus size={16} /> Nouvelle inspection</button>
         </div>
 
         {items.length === 0 ? (

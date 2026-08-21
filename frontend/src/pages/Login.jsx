@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, ArrowLeft, ShieldCheck } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const Login = () => {
   const { login } = useAuth();
@@ -27,7 +28,7 @@ const Login = () => {
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center gap-2 text-white/50 hover:text-gold text-sm mb-8"><ArrowLeft size={16} /> Retour au site</Link>
         <div className="text-center mb-8">
-          <div className="font-display text-3xl"><span className="text-gold">TORQUE</span> <span className="text-white">ÉLITE</span></div>
+          <img src={logo} alt="Torque Inspection Mobile" className="h-16 mx-auto" />
           <p className="text-white/50 mt-2 font-heading tracking-wide text-sm">ESPACE SÉCURISÉ</p>
         </div>
         <form onSubmit={submit} className="bg-[#141416] border border-white/10 rounded-xl p-8 space-y-5">
@@ -40,7 +41,7 @@ const Login = () => {
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#0e0e10] border border-white/12 rounded-md px-4 py-3 text-white focus:border-gold outline-none transition" required />
           </div>
           {error && <p className="text-red-400 text-sm">{error}</p>}
-          <button disabled={loading} className="w-full flex items-center justify-center gap-2 gold-gradient text-[#141414] font-heading font-600 px-6 py-3.5 rounded-sm hover:brightness-105 transition disabled:opacity-60">
+          <button disabled={loading} className="w-full flex items-center justify-center gap-2 gold-gradient text-white font-heading font-600 px-6 py-3.5 rounded-sm hover:brightness-105 transition disabled:opacity-60">
             <LogIn size={17} /> {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>

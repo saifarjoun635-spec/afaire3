@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { Mail, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import api from '../../lib/api';
 
-const vehicleTypes = ['Auto', 'Camion', 'Véhicule Lourd', 'Remorque', 'Autre'];
-const serviceTypes = ['Mécanique Mobile', 'Maintenance de Flotte', 'Véhicules Lourds & Remorques', 'Inspection PEP / SAAQ / Pré-achat', 'Diagnostic & Entretien', 'Autre'];
+const vehicleTypes = ['Automobile', 'Véhicule Lourd', 'Remorque', 'Moto', 'VR'];
+const serviceTypes = ['Inspection Pré-achat', 'Inspection PEP', 'Inspection SAAQ', 'Rapport d\'assurance', 'Autre'];
 
 const QuoteForm = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', phone: '', email: '', vehicle_type: 'Auto', service: 'Inspection PEP / SAAQ / Pré-achat', details: '' });
+  const [form, setForm] = useState({ name: '', phone: '', email: '', vehicle_type: 'Automobile', service: 'Inspection Pré-achat', details: '' });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -23,7 +23,7 @@ const QuoteForm = () => {
   };
 
   return (
-    <section id="soumission" className="bg-[#0a0a0b] py-24 px-5 lg:px-8">
+    <section id="soumission" className="bg-[#0e0e10] py-24 px-5 lg:px-8 border-t border-white/5">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <span className="text-gold font-heading text-sm tracking-[0.25em]">PAS DE PAPERASSE, PAS DE TRACAS</span>
@@ -36,7 +36,7 @@ const QuoteForm = () => {
             <CheckCircle2 className="text-gold mx-auto mb-4" size={44} />
             <h3 className="font-heading text-2xl text-white">Demande envoyée !</h3>
             <p className="text-white/60 mt-2">Merci {form.name}. Nous vous contacterons au {form.phone} sous peu.</p>
-            <button onClick={() => navigate('/reserver')} className="mt-6 gold-gradient text-[#141414] font-heading font-600 px-8 py-3 rounded-sm">Réserver & payer une inspection</button>
+            <button onClick={() => navigate('/reserver')} className="mt-6 gold-gradient text-white font-heading font-600 px-8 py-3 rounded-sm">Réserver & payer une inspection</button>
           </div>
         ) : (
         <div className="bg-[#141416] border border-white/10 rounded-xl p-7 md:p-9 space-y-5">
@@ -62,7 +62,7 @@ const QuoteForm = () => {
               </select>
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-1.5 font-heading">Service Requis</label>
+              <label className="block text-white/70 text-sm mb-1.5 font-heading">Type d'Inspection</label>
               <select value={form.service} onChange={set('service')} className="w-full bg-[#0e0e10] border border-white/12 rounded-md px-4 py-3 text-white focus:border-gold outline-none transition">
                 {serviceTypes.map((v) => <option key={v}>{v}</option>)}
               </select>
@@ -73,11 +73,11 @@ const QuoteForm = () => {
             <textarea value={form.details} onChange={set('details')} rows={4} className="w-full bg-[#0e0e10] border border-white/12 rounded-md px-4 py-3 text-white focus:border-gold outline-none transition resize-none" />
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button onClick={submit} disabled={loading} className="flex-1 flex items-center justify-center gap-2 gold-gradient text-[#141414] font-heading font-600 px-6 py-3.5 rounded-sm hover:brightness-105 transition disabled:opacity-60">
+            <button onClick={submit} disabled={loading} className="flex-1 flex items-center justify-center gap-2 gold-gradient text-white font-heading font-600 px-6 py-3.5 rounded-sm hover:brightness-110 transition disabled:opacity-60">
               <Mail size={17} /> {loading ? 'Envoi...' : 'Soumettre la demande'}
             </button>
             <button onClick={() => navigate('/reserver')} className="flex-1 flex items-center justify-center gap-2 border border-gold/40 text-gold font-heading px-6 py-3.5 rounded-sm hover:bg-gold/10 transition">
-              <MessageSquare size={17} /> Réserver & Payer
+              <ShieldCheck size={17} /> Réserver & Payer
             </button>
           </div>
           <p className="text-white/40 text-xs text-center">* Champs requis.</p>

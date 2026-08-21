@@ -63,6 +63,7 @@ class BookingCreate(BaseModel):
     client_password: str
     # inspection
     service_type: str = "Inspection PEP / SAAQ / Pré-achat"
+    vehicle_type: Optional[str] = "Automobile"
     vehicle_make: str
     vehicle_model: str
     vehicle_year: str
@@ -240,6 +241,7 @@ async def create_booking(body: BookingCreate):
             "phone": body.client_phone,
         },
         "vehicle": {
+            "type": body.vehicle_type or "Automobile",
             "make": body.vehicle_make,
             "model": body.vehicle_model,
             "year": body.vehicle_year,

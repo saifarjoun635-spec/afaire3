@@ -4,6 +4,7 @@ import { LogOut, Users, ClipboardList, UserPlus, Trash2, Eye, EyeOff, Mail, Inbo
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { STATUS } from './ClientPortal';
+import logo from '../assets/logo.png';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-[#0a0a0b]">
       <header className="bg-[#141416] border-b border-white/10 px-5 lg:px-8 h-16 flex items-center justify-between">
-        <div className="font-display text-xl"><span className="text-gold">TORQUE</span> <span className="text-white">ÉLITE</span> <span className="text-white/40 text-sm font-heading ml-2">Admin • Patron</span></div>
+        <div className="flex items-center gap-3"><img src={logo} alt="Torque Inspection Mobile" className="h-9 w-auto" /> <span className="text-white/40 text-sm font-heading">Admin • Patron</span></div>
         <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-1.5 text-white/60 hover:text-gold text-sm"><LogOut size={16} /> Déconnexion</button>
       </header>
 
@@ -72,7 +73,7 @@ const AdminDashboard = () => {
 
         <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
           {tabs.map((t) => (
-            <button key={t.k} onClick={() => setTab(t.k)} className={`flex items-center gap-2 px-4 py-2.5 rounded-md font-heading text-sm whitespace-nowrap ${tab === t.k ? 'bg-gold text-[#141414]' : 'bg-[#141416] text-white/60 hover:text-white'}`}>
+            <button key={t.k} onClick={() => setTab(t.k)} className={`flex items-center gap-2 px-4 py-2.5 rounded-md font-heading text-sm whitespace-nowrap ${tab === t.k ? 'bg-gold text-white' : 'bg-[#141416] text-white/60 hover:text-white'}`}>
               <t.icon size={16} /> {t.label}
             </button>
           ))}
@@ -120,7 +121,7 @@ const AdminDashboard = () => {
                 <input placeholder="Mot de passe" value={newEmp.password} onChange={(e) => setNewEmp({ ...newEmp, password: e.target.value })} className={field} />
               </div>
               {msg && <p className="text-red-400 text-sm mt-3">{msg}</p>}
-              <button onClick={addEmployee} className="mt-4 gold-gradient text-[#141414] font-heading font-600 px-6 py-2.5 rounded-sm text-sm">Créer l'employé</button>
+              <button onClick={addEmployee} className="mt-4 gold-gradient text-white font-heading font-600 px-6 py-2.5 rounded-sm text-sm">Créer l'employé</button>
             </div>
             <div className="space-y-3">
               {employees.map((e) => (
