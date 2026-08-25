@@ -18,7 +18,7 @@ const BusinessCards = () => (
             <p className="font-heading text-white/80 tracking-wide">SERVICE D'INSPECTION MOBILE</p>
             <div className="w-16 h-0.5 bg-gold" />
             <ul className="space-y-2">
-              {['Auto • Camion • Véhicule Lourd', 'Remorque • Moto • VR', 'Inspection Pré-achat / PEP / SAAQ', 'Rapports d\'assurance complets'].map((s, i) => (
+              {['Auto • Camion • Véhicule Lourd', 'Remorque • Moto • VR', 'Inspection Pré-achat / PEP', 'Rapports d\'assurance complets'].map((s, i) => (
                 <li key={i} className="text-white/55 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-gold" /> {s}</li>
               ))}
             </ul>

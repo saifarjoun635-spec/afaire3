@@ -4,6 +4,7 @@ import { Clock, ClipboardList, FolderOpen, Settings, Menu, ArrowLeft, MapPin, Ph
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { STATUS } from './ClientPortal';
+import InspectionReportForm from '../components/InspectionReportForm';
 
 const EmployeeApp = () => {
   const { user, logout } = useAuth();
@@ -131,6 +132,7 @@ const Detail = ({ inspection, onBack, refresh }) => {
   const [i, setI] = useState(inspection);
   const [uploading, setUploading] = useState(false);
   const [reportNotes, setReportNotes] = useState(i.report?.notes || '');
+  const [showReport, setShowReport] = useState(false);
   const fileRef = useRef(null);
 
   const reload = async () => { const { data } = await api.get(`/inspections/${i.id}`); setI(data); };
@@ -212,14 +214,21 @@ const Detail = ({ inspection, onBack, refresh }) => {
         <Section title="Rapport & Statut">
           <div className="flex flex-wrap gap-2">
             {['scheduled', 'in_progress'].map((s) => (
-              <button key={s} onClick={() => setStatus(s)} className={`text-sm font-heading px-3 py-2 rounded border ${i.status === s ? 'bg-[#E11D2E] text-white border-blue-600' : 'border-gray-300 text-gray-600'}`}>{STATUS[s]?.label || s}</button>
+              <button key={s} onClick={() => setStatus(s)} className={`text-sm font-heading px-3 py-2 rounded border ${i.status === s ? 'bg-[#E11D2E] text-white border-[#E11D2E]' : 'border-gray-300 text-gray-600'}`}>{STATUS[s]?.label || s}</button>
             ))}
           </div>
-          <textarea value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} rows={4} placeholder="Notes du rapport d'inspection..." className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 focus:border-[#E11D2E] outline-none resize-none" />
-          <button onClick={finish} className="w-full flex items-center justify-center gap-2 bg-green-700 text-white font-heading py-3 rounded hover:bg-green-800 transition"><CheckCircle2 size={16} /> Compléter l'inspection</button>
+          <button onClick={() => setShowReport(true)} className="w-full flex items-center justify-center gap-2 bg-[#E11D2E] text-white font-heading py-3 rounded hover:bg-[#B3121C] transition">
+            <ClipboardList size={16} /> {i.detailed_report ? 'Modifier le rapport détaillé' : 'Remplir le rapport détaillé'}
+          </button>
+          {i.detailed_report && <p className="text-gray-500 text-xs text-center">Rapport détaillé enregistré {i.detailed_report.grade ? `• Note ${i.detailed_report.grade}` : ''}</p>}
+          <div className="border-t border-gray-100 pt-3">
+            <textarea value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} rows={3} placeholder="Notes rapides (optionnel)..." className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 focus:border-[#E11D2E] outline-none resize-none" />
+            <button onClick={finish} className="mt-2 w-full flex items-center justify-center gap-2 bg-green-700 text-white font-heading py-3 rounded hover:bg-green-800 transition"><CheckCircle2 size={16} /> Compléter l'inspection</button>
+          </div>
           {i.status === 'completed' && <p className="text-green-700 text-sm text-center flex items-center justify-center gap-1"><CheckCircle2 size={14} /> Inspection complétée</p>}
         </Section>
       </main>
+      {showReport && <InspectionReportForm inspection={i} onClose={() => setShowReport(false)} onSaved={(data) => setI(data)} />}
     </div>
   );
 };

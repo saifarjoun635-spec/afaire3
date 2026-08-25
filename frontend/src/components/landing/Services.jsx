@@ -25,7 +25,7 @@ const Services = () => {
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-gold font-heading text-sm tracking-[0.25em]">NOTRE EXPERTISE</span>
             <h2 className="font-display text-4xl md:text-5xl text-white mt-3">INSPECTION MOBILE</h2>
-            <p className="text-white/60 mt-5 leading-relaxed">Inspection pré-achat, PEP et SAAQ, rapports d'assurance complets — directement à votre emplacement, pour tous types de véhicules.</p>
+            <p className="text-white/60 mt-5 leading-relaxed">Inspection pré-achat, PEP et rapports d'assurance complets — directement à votre emplacement, pour tous types de véhicules.</p>
           </div>
           <div id="vehicules" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {categories.map((c, i) => (

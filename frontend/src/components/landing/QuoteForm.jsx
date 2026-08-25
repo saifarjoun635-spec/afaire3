@@ -4,7 +4,7 @@ import { Mail, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import api from '../../lib/api';
 
 const vehicleTypes = ['Automobile', 'Véhicule Lourd', 'Remorque', 'Moto', 'VR'];
-const serviceTypes = ['Inspection Pré-achat', 'Inspection PEP', 'Inspection SAAQ', 'Rapport d\'assurance', 'Autre'];
+const serviceTypes = ['Inspection Pré-achat', 'Inspection PEP', 'Rapport d\'assurance', 'Autre'];
 
 const QuoteForm = () => {
   const navigate = useNavigate();

@@ -5,10 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo.png';
 
 const links = [
-  { label: 'ACCUEIL', to: '#accueil' },
-  { label: 'INSPECTIONS', to: '#services' },
-  { label: 'VÉHICULES', to: '#vehicules' },
-  { label: 'EN ACTION', to: '#galerie' },
+  { label: 'ACCUEIL', to: '/#accueil' },
+  { label: 'INSPECTIONS', to: '/#services' },
+  { label: 'VÉHICULES', to: '/#vehicules' },
+  { label: 'EN ACTION', to: '/#galerie' },
+  { label: 'ALBUM', to: '/album' },
 ];
 
 const Navbar = () => {

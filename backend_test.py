@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend regression test for vehicle_type storage
-Tests that vehicle_type is correctly stored as vehicle.type in inspections
+Backend test for Torque Inspection Mobile - NEW endpoints
+Tests: ALBUM, DETAILED INSPECTION REPORT, SAAQ REGRESSION
 """
 import requests
 import json
@@ -11,112 +11,75 @@ from datetime import datetime
 # Base URL from frontend/.env
 BASE_URL = "https://job-dispatch-61.preview.emergentagent.com/api"
 
-# Admin credentials from test_result.md
+# Admin credentials
 ADMIN_EMAIL = "admin@torqueelite.com"
 ADMIN_PASSWORD = "admin123"
 
-def test_booking_with_vehicle_type():
-    """Test POST /api/bookings with vehicle_type and verify it's stored as vehicle.type"""
+# Test image (1x1 transparent PNG base64)
+TEST_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+
+def print_test_header(test_num, description):
     print("\n" + "="*80)
-    print("TEST 1: POST /api/bookings with vehicle_type='Véhicule Lourd'")
+    print(f"TEST {test_num}: {description}")
     print("="*80)
+
+def print_result(passed, message):
+    if passed:
+        print(f"✓ {message}")
+    else:
+        print(f"❌ {message}")
+
+# ============================================================================
+# ALBUM TESTS
+# ============================================================================
+
+def test_album_public_get_without_token():
+    """Test GET /api/album without token (should return 200, public endpoint)"""
+    print_test_header(1, "GET /api/album without token (public)")
     
-    # Generate unique email for this test
-    unique_email = f"client_{uuid.uuid4().hex[:8]}@test.com"
-    
-    booking_data = {
-        "client_name": "Jean Tremblay",
-        "client_email": unique_email,
-        "client_phone": "514-555-1234",
-        "client_password": "testpass123",
-        "service_type": "Inspection Pré-achat",
-        "vehicle_type": "Véhicule Lourd",
-        "vehicle_make": "Ford",
-        "vehicle_model": "F-150",
-        "vehicle_year": "2018",
-        "location_address": "123 rue Test, Montréal",
-        "components": [
-            {
-                "name": "Other",
-                "description": "Freins"
-            }
-        ]
-    }
-    
-    print(f"Creating booking with unique email: {unique_email}")
-    print(f"Vehicle type: {booking_data['vehicle_type']}")
-    
-    response = requests.post(f"{BASE_URL}/bookings", json=booking_data)
-    
+    response = requests.get(f"{BASE_URL}/album")
     print(f"Status Code: {response.status_code}")
     
     if response.status_code != 200:
-        print(f"❌ FAILED: Expected 200, got {response.status_code}")
+        print_result(False, f"Expected 200, got {response.status_code}")
         print(f"Response: {response.text}")
-        return None, None
+        return False
     
     data = response.json()
+    if not isinstance(data, list):
+        print_result(False, f"Expected list, got {type(data)}")
+        return False
     
-    # Verify response structure
-    if "token" not in data:
-        print("❌ FAILED: No token in response")
-        return None, None
+    print_result(True, f"Public GET /api/album returns 200 with list (length: {len(data)})")
+    print(f"✅ TEST 1 PASSED")
+    return True
+
+
+def test_album_post_without_token():
+    """Test POST /api/album without token (should return 401/403)"""
+    print_test_header(2, "POST /api/album without token (should fail)")
     
-    if "user" not in data:
-        print("❌ FAILED: No user in response")
-        return None, None
+    album_data = {
+        "image": TEST_IMAGE,
+        "caption": "Test without auth"
+    }
     
-    if "inspection" not in data:
-        print("❌ FAILED: No inspection in response")
-        return None, None
+    response = requests.post(f"{BASE_URL}/album", json=album_data)
+    print(f"Status Code: {response.status_code}")
     
-    print("✓ Response contains token, user, and inspection")
+    if response.status_code not in [401, 403]:
+        print_result(False, f"Expected 401 or 403, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
     
-    # Verify user role
-    user = data["user"]
-    if user.get("role") != "client":
-        print(f"❌ FAILED: Expected user role 'client', got '{user.get('role')}'")
-        return None, None
-    
-    print(f"✓ User role is 'client'")
-    
-    # Verify inspection status
-    inspection = data["inspection"]
-    if inspection.get("status") != "paid":
-        print(f"❌ FAILED: Expected inspection status 'paid', got '{inspection.get('status')}'")
-        return None, None
-    
-    print(f"✓ Inspection status is 'paid'")
-    
-    # CRITICAL: Verify vehicle.type is stored correctly
-    vehicle = inspection.get("vehicle", {})
-    vehicle_type = vehicle.get("type")
-    
-    print(f"\nVehicle data in inspection:")
-    print(f"  vehicle.type: {vehicle_type}")
-    print(f"  vehicle.make: {vehicle.get('make')}")
-    print(f"  vehicle.model: {vehicle.get('model')}")
-    print(f"  vehicle.year: {vehicle.get('year')}")
-    
-    if vehicle_type != "Véhicule Lourd":
-        print(f"❌ FAILED: Expected vehicle.type='Véhicule Lourd', got '{vehicle_type}'")
-        return None, None
-    
-    print(f"✓ vehicle.type is correctly stored as 'Véhicule Lourd'")
-    
-    inspection_id = inspection.get("id")
-    print(f"\n✅ TEST 1 PASSED: Booking created successfully")
-    print(f"   Inspection ID: {inspection_id}")
-    print(f"   Client token: {data['token'][:20]}...")
-    
-    return data["token"], inspection_id
+    print_result(True, f"POST /api/album without token correctly returns {response.status_code}")
+    print(f"✅ TEST 2 PASSED")
+    return True
 
 
 def test_admin_login():
-    """Test admin login"""
-    print("\n" + "="*80)
-    print("TEST 2: Admin Login")
-    print("="*80)
+    """Test admin login and return token"""
+    print_test_header(3, "Admin Login")
     
     login_data = {
         "email": ADMIN_EMAIL,
@@ -124,165 +87,534 @@ def test_admin_login():
     }
     
     response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
-    
     print(f"Status Code: {response.status_code}")
     
     if response.status_code != 200:
-        print(f"❌ FAILED: Expected 200, got {response.status_code}")
+        print_result(False, f"Expected 200, got {response.status_code}")
         print(f"Response: {response.text}")
         return None
     
     data = response.json()
     
-    if "token" not in data:
-        print("❌ FAILED: No token in response")
-        return None
-    
-    if "user" not in data:
-        print("❌ FAILED: No user in response")
+    if "token" not in data or "user" not in data:
+        print_result(False, "Missing token or user in response")
         return None
     
     user = data["user"]
     if user.get("role") != "admin":
-        print(f"❌ FAILED: Expected role 'admin', got '{user.get('role')}'")
+        print_result(False, f"Expected role 'admin', got '{user.get('role')}'")
         return None
     
-    print(f"✓ Admin logged in successfully")
-    print(f"✅ TEST 2 PASSED")
-    
+    print_result(True, f"Admin logged in successfully (email: {user.get('email')})")
+    print(f"✅ TEST 3 PASSED")
     return data["token"]
 
 
-def test_admin_list_inspections(admin_token, expected_inspection_id):
-    """Test GET /api/inspections as admin and verify the new booking appears"""
-    print("\n" + "="*80)
-    print("TEST 3: GET /api/inspections (admin) - verify new booking appears")
-    print("="*80)
+def test_album_post_with_admin_token(admin_token):
+    """Test POST /api/album with admin token (should return 200 with id, data, caption)"""
+    print_test_header(4, "POST /api/album with admin token")
+    
+    album_data = {
+        "image": TEST_IMAGE,
+        "caption": "Test Album Image"
+    }
     
     headers = {"Authorization": f"Bearer {admin_token}"}
-    
-    response = requests.get(f"{BASE_URL}/inspections", headers=headers)
-    
+    response = requests.post(f"{BASE_URL}/album", json=album_data, headers=headers)
     print(f"Status Code: {response.status_code}")
     
     if response.status_code != 200:
-        print(f"❌ FAILED: Expected 200, got {response.status_code}")
+        print_result(False, f"Expected 200, got {response.status_code}")
         print(f"Response: {response.text}")
+        return None
+    
+    data = response.json()
+    
+    # Verify response has id, data, caption
+    if "id" not in data:
+        print_result(False, "Missing 'id' in response")
+        return None
+    
+    if "data" not in data:
+        print_result(False, "Missing 'data' in response")
+        return None
+    
+    if "caption" not in data:
+        print_result(False, "Missing 'caption' in response")
+        return None
+    
+    if data["caption"] != "Test Album Image":
+        print_result(False, f"Expected caption 'Test Album Image', got '{data['caption']}'")
+        return None
+    
+    print_result(True, f"Album image created with id: {data['id']}")
+    print_result(True, f"Caption: {data['caption']}")
+    print_result(True, f"Data field present: {len(data['data'])} chars")
+    print(f"✅ TEST 4 PASSED")
+    return data["id"]
+
+
+def test_album_get_includes_new_image(image_id):
+    """Test GET /api/album includes the newly created image"""
+    print_test_header(5, "GET /api/album includes new image")
+    
+    response = requests.get(f"{BASE_URL}/album")
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code != 200:
+        print_result(False, f"Expected 200, got {response.status_code}")
         return False
     
-    inspections = response.json()
+    data = response.json()
     
-    print(f"Total inspections: {len(inspections)}")
-    
-    # Find the inspection we just created
+    # Find the image we just created
     found = False
-    for inspection in inspections:
-        if inspection.get("id") == expected_inspection_id:
+    for item in data:
+        if item.get("id") == image_id:
             found = True
-            print(f"\n✓ Found inspection with ID: {expected_inspection_id}")
-            
-            # Verify vehicle.type is present
-            vehicle = inspection.get("vehicle", {})
-            vehicle_type = vehicle.get("type")
-            
-            print(f"  vehicle.type: {vehicle_type}")
-            print(f"  vehicle.make: {vehicle.get('make')}")
-            print(f"  vehicle.model: {vehicle.get('model')}")
-            print(f"  vehicle.year: {vehicle.get('year')}")
-            
-            if vehicle_type != "Véhicule Lourd":
-                print(f"❌ FAILED: Expected vehicle.type='Véhicule Lourd', got '{vehicle_type}'")
-                return False
-            
-            print(f"✓ vehicle.type is correctly stored as 'Véhicule Lourd'")
+            print_result(True, f"Found image with id: {image_id}")
+            print_result(True, f"Caption: {item.get('caption')}")
             break
     
     if not found:
-        print(f"❌ FAILED: Inspection {expected_inspection_id} not found in admin's inspection list")
+        print_result(False, f"Image {image_id} not found in album list")
         return False
     
-    print(f"\n✅ TEST 3 PASSED: New booking appears in admin's inspection list with correct vehicle.type")
+    print(f"✅ TEST 5 PASSED")
     return True
 
 
-def test_admin_available_inspections(admin_token):
-    """Test GET /api/inspections/available as admin"""
-    print("\n" + "="*80)
-    print("TEST 4: GET /api/inspections/available (admin)")
-    print("="*80)
+def test_album_delete_with_admin_token(admin_token, image_id):
+    """Test DELETE /api/album/{id} with admin token (should return 200 {ok:true})"""
+    print_test_header(6, f"DELETE /api/album/{image_id} with admin token")
     
     headers = {"Authorization": f"Bearer {admin_token}"}
-    
-    response = requests.get(f"{BASE_URL}/inspections/available", headers=headers)
-    
+    response = requests.delete(f"{BASE_URL}/album/{image_id}", headers=headers)
     print(f"Status Code: {response.status_code}")
     
     if response.status_code != 200:
-        print(f"❌ FAILED: Expected 200, got {response.status_code}")
+        print_result(False, f"Expected 200, got {response.status_code}")
         print(f"Response: {response.text}")
         return False
     
-    available_inspections = response.json()
+    data = response.json()
     
-    print(f"Available (unassigned) inspections: {len(available_inspections)}")
+    if not data.get("ok"):
+        print_result(False, f"Expected {{ok: true}}, got {data}")
+        return False
     
-    # Verify all returned inspections have status="paid" and no assigned_employee_id
-    for inspection in available_inspections:
-        status = inspection.get("status")
-        assigned = inspection.get("assigned_employee_id")
-        
-        if status != "paid":
-            print(f"❌ FAILED: Found inspection with status '{status}' (expected 'paid')")
-            return False
-        
-        if assigned is not None:
-            print(f"❌ FAILED: Found inspection with assigned_employee_id '{assigned}' (expected None)")
-            return False
-    
-    print(f"✓ All available inspections have status='paid' and no assigned employee")
-    print(f"\n✅ TEST 4 PASSED: GET /api/inspections/available works correctly")
+    print_result(True, "Album image deleted successfully")
+    print(f"✅ TEST 6 PASSED")
     return True
 
 
+def test_album_delete_unknown_id(admin_token):
+    """Test DELETE /api/album/{unknown_id} (should return 404)"""
+    print_test_header(7, "DELETE /api/album/{unknown_id} (should return 404)")
+    
+    unknown_id = str(uuid.uuid4())
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    response = requests.delete(f"{BASE_URL}/album/{unknown_id}", headers=headers)
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code != 404:
+        print_result(False, f"Expected 404, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+    
+    print_result(True, "DELETE unknown album image correctly returns 404")
+    print(f"✅ TEST 7 PASSED")
+    return True
+
+
+def test_album_delete_without_token():
+    """Test DELETE /api/album/{id} without token (should return 401/403)"""
+    print_test_header(8, "DELETE /api/album/{id} without token (should fail)")
+    
+    fake_id = str(uuid.uuid4())
+    response = requests.delete(f"{BASE_URL}/album/{fake_id}")
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code not in [401, 403]:
+        print_result(False, f"Expected 401 or 403, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+    
+    print_result(True, f"DELETE /api/album without token correctly returns {response.status_code}")
+    print(f"✅ TEST 8 PASSED")
+    return True
+
+
+# ============================================================================
+# DETAILED INSPECTION REPORT TESTS
+# ============================================================================
+
+def test_create_booking_for_inspection():
+    """Create a booking to get an inspection id with status paid"""
+    print_test_header(9, "Create booking for inspection report testing")
+    
+    unique_email = f"client_{uuid.uuid4().hex[:8]}@test.com"
+    
+    booking_data = {
+        "client_name": "Marie Dubois",
+        "client_email": unique_email,
+        "client_phone": "514-555-9876",
+        "client_password": "testpass456",
+        "service_type": "Inspection Pré-achat",
+        "vehicle_make": "Ford",
+        "vehicle_model": "Escape",
+        "vehicle_year": "2020",
+        "location_address": "456 rue Test, Québec"
+    }
+    
+    print(f"Creating booking with email: {unique_email}")
+    
+    response = requests.post(f"{BASE_URL}/bookings", json=booking_data)
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code != 200:
+        print_result(False, f"Expected 200, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return None, None
+    
+    data = response.json()
+    
+    if "inspection" not in data:
+        print_result(False, "Missing 'inspection' in response")
+        return None, None
+    
+    inspection = data["inspection"]
+    inspection_id = inspection.get("id")
+    status = inspection.get("status")
+    
+    if status != "paid":
+        print_result(False, f"Expected status 'paid', got '{status}'")
+        return None, None
+    
+    print_result(True, f"Booking created with inspection id: {inspection_id}")
+    print_result(True, f"Inspection status: {status}")
+    print(f"✅ TEST 9 PASSED")
+    return inspection_id, data.get("token")
+
+
+def test_inspection_report_incomplete(admin_token, inspection_id):
+    """Test POST /api/inspections/{id}/inspection-report with complete=false"""
+    print_test_header(10, f"POST /api/inspections/{inspection_id}/inspection-report (complete=false)")
+    
+    report_data = {
+        "report": {
+            "grade": "B",
+            "report_type": "Préachat",
+            "vehicle": {
+                "make": "Ford"
+            },
+            "checklist": {
+                "structure": {
+                    "Châssis": {
+                        "state": "OK",
+                        "comment": "bon"
+                    }
+                },
+                "summary": {
+                    "recommendation": "OK"
+                }
+            }
+        },
+        "complete": False
+    }
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    response = requests.post(f"{BASE_URL}/inspections/{inspection_id}/inspection-report", 
+                            json=report_data, headers=headers)
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code != 200:
+        print_result(False, f"Expected 200, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+    
+    data = response.json()
+    
+    # Verify detailed_report is present
+    if "detailed_report" not in data:
+        print_result(False, "Missing 'detailed_report' in response")
+        return False
+    
+    detailed_report = data["detailed_report"]
+    
+    # Verify grade is "B"
+    if detailed_report.get("grade") != "B":
+        print_result(False, f"Expected grade 'B', got '{detailed_report.get('grade')}'")
+        return False
+    
+    print_result(True, f"detailed_report present with grade: {detailed_report.get('grade')}")
+    
+    # Verify status is still "paid" (not completed)
+    status = data.get("status")
+    if status != "paid":
+        print_result(False, f"Expected status 'paid' (complete=false), got '{status}'")
+        return False
+    
+    print_result(True, f"Status remains 'paid' (complete=false)")
+    print(f"✅ TEST 10 PASSED")
+    return True
+
+
+def test_inspection_report_complete(admin_token, inspection_id):
+    """Test POST /api/inspections/{id}/inspection-report with complete=true"""
+    print_test_header(11, f"POST /api/inspections/{inspection_id}/inspection-report (complete=true)")
+    
+    report_data = {
+        "report": {
+            "grade": "A",
+            "report_type": "Préachat",
+            "vehicle": {
+                "make": "Ford",
+                "model": "Escape"
+            },
+            "checklist": {
+                "structure": {
+                    "Châssis": {
+                        "state": "Excellent",
+                        "comment": "très bon état"
+                    }
+                },
+                "summary": {
+                    "recommendation": "Recommandé"
+                }
+            }
+        },
+        "complete": True
+    }
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    response = requests.post(f"{BASE_URL}/inspections/{inspection_id}/inspection-report", 
+                            json=report_data, headers=headers)
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code != 200:
+        print_result(False, f"Expected 200, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+    
+    data = response.json()
+    
+    # Verify detailed_report is present
+    if "detailed_report" not in data:
+        print_result(False, "Missing 'detailed_report' in response")
+        return False
+    
+    detailed_report = data["detailed_report"]
+    print_result(True, f"detailed_report present with grade: {detailed_report.get('grade')}")
+    
+    # Verify status is now "completed"
+    status = data.get("status")
+    if status != "completed":
+        print_result(False, f"Expected status 'completed' (complete=true), got '{status}'")
+        return False
+    
+    print_result(True, f"Status changed to 'completed' (complete=true)")
+    print(f"✅ TEST 11 PASSED")
+    return True
+
+
+def test_inspection_report_persisted(admin_token, inspection_id):
+    """Test GET /api/inspections/{id} to verify detailed_report is persisted"""
+    print_test_header(12, f"GET /api/inspections/{inspection_id} (verify detailed_report persisted)")
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    response = requests.get(f"{BASE_URL}/inspections/{inspection_id}", headers=headers)
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code != 200:
+        print_result(False, f"Expected 200, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+    
+    data = response.json()
+    
+    # Verify detailed_report is present
+    if "detailed_report" not in data:
+        print_result(False, "Missing 'detailed_report' in persisted inspection")
+        return False
+    
+    detailed_report = data["detailed_report"]
+    print_result(True, f"detailed_report persisted with grade: {detailed_report.get('grade')}")
+    
+    # Verify status is "completed"
+    status = data.get("status")
+    if status != "completed":
+        print_result(False, f"Expected status 'completed', got '{status}'")
+        return False
+    
+    print_result(True, f"Status is 'completed'")
+    print(f"✅ TEST 12 PASSED")
+    return True
+
+
+def test_inspection_report_client_access_control(client_token, inspection_id):
+    """Test POST /api/inspections/{id}/inspection-report with client token (should return 403)"""
+    print_test_header(13, "POST inspection-report with client token (should return 403)")
+    
+    report_data = {
+        "report": {
+            "grade": "C"
+        },
+        "complete": False
+    }
+    
+    headers = {"Authorization": f"Bearer {client_token}"}
+    response = requests.post(f"{BASE_URL}/inspections/{inspection_id}/inspection-report", 
+                            json=report_data, headers=headers)
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code != 403:
+        print_result(False, f"Expected 403, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+    
+    print_result(True, "Client token correctly denied access (403)")
+    print(f"✅ TEST 13 PASSED")
+    return True
+
+
+# ============================================================================
+# SAAQ REGRESSION TEST
+# ============================================================================
+
+def test_saaq_regression():
+    """Test that default service_type no longer contains 'SAAQ'"""
+    print_test_header(14, "SAAQ Regression - verify service_type doesn't contain 'SAAQ'")
+    
+    unique_email = f"client_{uuid.uuid4().hex[:8]}@test.com"
+    
+    # Create booking WITHOUT service_type (should use default)
+    booking_data = {
+        "client_name": "Pierre Lavoie",
+        "client_email": unique_email,
+        "client_phone": "514-555-1111",
+        "client_password": "testpass789",
+        # NO service_type field - should use default
+        "vehicle_make": "Toyota",
+        "vehicle_model": "Camry",
+        "vehicle_year": "2019",
+        "location_address": "789 rue Test, Laval"
+    }
+    
+    print(f"Creating booking WITHOUT service_type (should use default)")
+    print(f"Email: {unique_email}")
+    
+    response = requests.post(f"{BASE_URL}/bookings", json=booking_data)
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code != 200:
+        print_result(False, f"Expected 200, got {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+    
+    data = response.json()
+    
+    if "inspection" not in data:
+        print_result(False, "Missing 'inspection' in response")
+        return False
+    
+    inspection = data["inspection"]
+    service_type = inspection.get("service_type")
+    
+    print(f"service_type: '{service_type}'")
+    
+    # Verify service_type does NOT contain 'SAAQ'
+    if service_type and "SAAQ" in service_type:
+        print_result(False, f"service_type contains 'SAAQ': '{service_type}'")
+        return False
+    
+    print_result(True, f"service_type does NOT contain 'SAAQ': '{service_type}'")
+    
+    # Verify it equals the expected default
+    expected_default = "Inspection PEP / Pré-achat"
+    if service_type != expected_default:
+        print_result(False, f"Expected default '{expected_default}', got '{service_type}'")
+        return False
+    
+    print_result(True, f"service_type equals expected default: '{expected_default}'")
+    print(f"✅ TEST 14 PASSED")
+    return True
+
+
+# ============================================================================
+# MAIN TEST RUNNER
+# ============================================================================
+
 def main():
     print("\n" + "="*80)
-    print("BACKEND REGRESSION TEST: Vehicle Type Storage")
+    print("BACKEND TEST: NEW ENDPOINTS - ALBUM, DETAILED REPORT, SAAQ REGRESSION")
     print("="*80)
     print(f"Base URL: {BASE_URL}")
     print(f"Test Time: {datetime.now().isoformat()}")
     
-    # Test 1: Create booking with vehicle_type
-    client_token, inspection_id = test_booking_with_vehicle_type()
-    if not client_token or not inspection_id:
-        print("\n❌ REGRESSION TEST FAILED: Booking creation failed")
-        return 1
+    test_results = []
     
-    # Test 2: Admin login
+    # ALBUM TESTS
+    test_results.append(("GET /api/album (public)", test_album_public_get_without_token()))
+    test_results.append(("POST /api/album without token", test_album_post_without_token()))
+    
     admin_token = test_admin_login()
     if not admin_token:
-        print("\n❌ REGRESSION TEST FAILED: Admin login failed")
+        print("\n❌ CRITICAL: Admin login failed, cannot continue")
         return 1
+    test_results.append(("Admin login", True))
     
-    # Test 3: Admin lists inspections and verifies the new booking
-    if not test_admin_list_inspections(admin_token, inspection_id):
-        print("\n❌ REGRESSION TEST FAILED: Admin inspection listing failed")
+    image_id = test_album_post_with_admin_token(admin_token)
+    if not image_id:
+        print("\n❌ CRITICAL: Album image creation failed")
         return 1
+    test_results.append(("POST /api/album (admin)", True))
     
-    # Test 4: Admin gets available inspections
-    if not test_admin_available_inspections(admin_token):
-        print("\n❌ REGRESSION TEST FAILED: Available inspections endpoint failed")
+    test_results.append(("GET /api/album includes new image", test_album_get_includes_new_image(image_id)))
+    test_results.append(("DELETE /api/album/{id} (admin)", test_album_delete_with_admin_token(admin_token, image_id)))
+    test_results.append(("DELETE /api/album/{unknown_id}", test_album_delete_unknown_id(admin_token)))
+    test_results.append(("DELETE /api/album without token", test_album_delete_without_token()))
+    
+    # DETAILED INSPECTION REPORT TESTS
+    inspection_id, client_token = test_create_booking_for_inspection()
+    if not inspection_id:
+        print("\n❌ CRITICAL: Booking creation failed")
         return 1
+    test_results.append(("Create booking for inspection", True))
+    
+    test_results.append(("POST inspection-report (complete=false)", 
+                        test_inspection_report_incomplete(admin_token, inspection_id)))
+    test_results.append(("POST inspection-report (complete=true)", 
+                        test_inspection_report_complete(admin_token, inspection_id)))
+    test_results.append(("GET inspection (verify persisted)", 
+                        test_inspection_report_persisted(admin_token, inspection_id)))
+    test_results.append(("POST inspection-report (client access control)", 
+                        test_inspection_report_client_access_control(client_token, inspection_id)))
+    
+    # SAAQ REGRESSION TEST
+    test_results.append(("SAAQ regression (no 'SAAQ' in default service_type)", test_saaq_regression()))
+    
+    # SUMMARY
+    print("\n" + "="*80)
+    print("TEST SUMMARY")
+    print("="*80)
+    
+    passed = sum(1 for _, result in test_results if result)
+    total = len(test_results)
+    
+    for test_name, result in test_results:
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"{status}: {test_name}")
     
     print("\n" + "="*80)
-    print("✅ ALL REGRESSION TESTS PASSED")
-    print("="*80)
-    print("\nSummary:")
-    print("  ✓ POST /api/bookings correctly stores vehicle_type as vehicle.type")
-    print("  ✓ Admin login works")
-    print("  ✓ GET /api/inspections shows new booking with vehicle.type present")
-    print("  ✓ GET /api/inspections/available works correctly")
-    print("\n")
-    return 0
+    if passed == total:
+        print(f"✅ ALL {total} TESTS PASSED")
+        print("="*80)
+        return 0
+    else:
+        print(f"❌ {total - passed} of {total} TESTS FAILED")
+        print("="*80)
+        return 1
 
 
 if __name__ == "__main__":

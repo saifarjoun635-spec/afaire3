@@ -8,6 +8,7 @@ import Booking from "./pages/Booking";
 import ClientPortal from "./pages/ClientPortal";
 import AdminDashboard from "./pages/AdminDashboard";
 import EmployeeApp from "./pages/EmployeeApp";
+import Album from "./pages/Album";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/reserver" element={<Booking />} />
+            <Route path="/album" element={<Album />} />
             <Route path="/portail" element={<ProtectedRoute roles={["client"]}><ClientPortal /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/employe" element={<ProtectedRoute roles={["employee"]}><EmployeeApp /></ProtectedRoute>} />

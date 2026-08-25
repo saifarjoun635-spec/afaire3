@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, ClipboardList, UserPlus, Trash2, Eye, EyeOff, Mail, Inbox, ClipboardCheck, TrendingUp } from 'lucide-react';
+import { LogOut, Users, ClipboardList, UserPlus, Trash2, Eye, EyeOff, Mail, Inbox, ClipboardCheck, TrendingUp, ImagePlus, Images, FileText } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { STATUS } from './ClientPortal';
 import logo from '../assets/logo.png';
+import ImageCropperModal from '../components/ImageCropperModal';
+import InspectionReportForm from '../components/InspectionReportForm';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -18,6 +20,12 @@ const AdminDashboard = () => {
   const [showPw, setShowPw] = useState({});
   const [newEmp, setNewEmp] = useState({ name: '', email: '', password: '', phone: '' });
   const [msg, setMsg] = useState('');
+  const [album, setAlbum] = useState([]);
+  const [cropSrc, setCropSrc] = useState(null);
+  const [caption, setCaption] = useState('');
+  const [reportInspection, setReportInspection] = useState(null);
+
+  const loadAlbum = async () => { const { data } = await api.get('/album'); setAlbum(data); };
 
   const loadAll = async () => {
     const [s, i, e, u, q] = await Promise.all([
@@ -25,7 +33,7 @@ const AdminDashboard = () => {
     ]);
     setStats(s.data); setInspections(i.data); setEmployees(e.data); setAllUsers(u.data); setQuotes(q.data);
   };
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); loadAlbum(); }, []);
 
   const assign = async (id, employee_id) => {
     if (!employee_id) return;
@@ -45,11 +53,29 @@ const AdminDashboard = () => {
 
   const delUser = async (id) => { await api.delete(`/users/${id}`); loadAll(); };
 
+  const onPickImage = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(reader.result);
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const saveCropped = async (dataUrl) => {
+    await api.post('/album', { image: dataUrl, caption });
+    setCropSrc(null); setCaption('');
+    loadAlbum();
+  };
+
+  const delAlbum = async (id) => { await api.delete(`/album/${id}`); loadAlbum(); };
+
   const tabs = [
     { k: 'inspections', label: 'Inspections', icon: ClipboardList },
     { k: 'employees', label: 'Employés', icon: Users },
     { k: 'credentials', label: 'Identifiants', icon: EyeOff },
     { k: 'quotes', label: 'Soumissions', icon: Inbox },
+    { k: 'album', label: 'Album', icon: Images },
   ];
 
   const field = 'w-full bg-[#0e0e10] border border-white/12 rounded-md px-3 py-2.5 text-white text-sm focus:border-gold outline-none';
@@ -104,6 +130,9 @@ const AdminDashboard = () => {
                     {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
                   </select>
                   {it.assigned_employee_name && <span className="text-green-300 text-sm">→ {it.assigned_employee_name}</span>}
+                  <button onClick={() => setReportInspection(it)} className="ml-auto flex items-center gap-1.5 bg-gold text-white font-heading text-sm px-4 py-2 rounded-md hover:brightness-110">
+                    <FileText size={15} /> {it.detailed_report ? 'Voir / modifier rapport' : 'Remplir le rapport'}
+                  </button>
                 </div>
               </div>
             ))}
@@ -175,7 +204,37 @@ const AdminDashboard = () => {
             ))}
           </div>
         )}
+
+        {tab === 'album' && (
+          <div className="space-y-6">
+            <div className="bg-[#141416] border border-white/10 rounded-xl p-6">
+              <h3 className="flex items-center gap-2 font-heading text-lg text-white mb-4"><ImagePlus size={18} className="text-gold" /> Ajouter une image à l'album</h3>
+              <p className="text-white/50 text-sm mb-4">Choisissez une photo, recadrez-la pour qu'elle ressorte bien, puis publiez-la sur la page Album.</p>
+              <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Légende (optionnel)" className={field + ' mb-3'} />
+              <label className="inline-flex items-center gap-2 gold-gradient text-white font-heading font-600 px-6 py-2.5 rounded-sm text-sm cursor-pointer">
+                <ImagePlus size={16} /> Choisir une image
+                <input type="file" accept="image/*" className="hidden" onChange={onPickImage} />
+              </label>
+            </div>
+            {album.length === 0 ? (
+              <p className="text-white/40 text-center py-10">Aucune image dans l'album.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {album.map((it) => (
+                  <div key={it.id} className="relative group rounded-lg overflow-hidden border border-white/8">
+                    <img src={it.data} alt={it.caption} className="w-full h-40 object-cover" />
+                    {it.caption && <div className="bg-[#0e0e10] px-2 py-1.5 text-white/70 text-xs truncate">{it.caption}</div>}
+                    <button onClick={() => delAlbum(it.id)} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition"><Trash2 size={14} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
+
+      {cropSrc && <ImageCropperModal src={cropSrc} onCancel={() => setCropSrc(null)} onDone={saveCropped} />}
+      {reportInspection && <InspectionReportForm inspection={reportInspection} onClose={() => setReportInspection(null)} onSaved={() => { loadAll(); }} />}
     </div>
   );
 };

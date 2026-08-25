@@ -5,7 +5,7 @@ import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
 
-const services = ['Inspection Pré-achat', 'Inspection PEP', 'Inspection SAAQ', "Rapport d'assurance"];
+const services = ['Inspection Pré-achat', 'Inspection PEP', "Rapport d'assurance"];
 const vehicleTypes = ['Automobile', 'Véhicule Lourd', 'Remorque', 'Moto', 'VR'];
 
 const Booking = () => {

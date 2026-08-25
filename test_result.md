@@ -195,10 +195,36 @@ frontend:
         -agent: "main"
         -comment: "Landing verified visually via screenshots. UI testing pending user approval."
 
+  - task: "Detailed inspection report endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "POST /api/inspections/{id}/inspection-report {report:dict, complete:bool} stores detailed_report; complete=true sets status completed. admin+employee only."
+        -working: true
+        -agent: "testing"
+        -comment: "✓ POST /api/inspections/{id}/inspection-report with complete=false stores detailed_report with grade 'B', status remains 'paid'. ✓ POST with complete=true updates detailed_report, status changes to 'completed'. ✓ GET /api/inspections/{id} shows detailed_report is persisted correctly. ✓ Access control: client token correctly returns 403. All detailed inspection report functionality working correctly."
+  - task: "Album endpoints (public GET, admin POST/DELETE)"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "✓ GET /api/album (public, no token) returns 200 with array. ✓ POST /api/album without token correctly returns 401. ✓ POST /api/album with admin token creates image, returns {id, data, caption}. ✓ GET /api/album includes newly created image. ✓ DELETE /api/album/{id} with admin token returns 200 {ok:true}. ✓ DELETE unknown id returns 404. ✓ DELETE without token returns 401. All album endpoints working correctly with proper authentication."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: false
 
 test_plan:
@@ -242,3 +268,13 @@ agent_communication:
       (3) GET /api/inspections as admin shows new booking with vehicle.type:"Véhicule Lourd" present and correct,
       (4) GET /api/inspections/available returns 7 available inspections, all with status:paid and no assigned employee.
       Backend change working correctly - vehicle_type field is properly stored as vehicle.type in inspection objects.
+    -agent: "testing"
+    -message: >
+      ✅ NEW ENDPOINTS TEST COMPLETE - ALL 14 TESTS PASSED! Tested new Album endpoints, Detailed Inspection Report, and SAAQ regression.
+      (1) ALBUM: GET /api/album (public) returns 200 with array. POST /api/album without token returns 401. POST with admin token creates image with {id, data, caption}. 
+      GET /api/album includes new image. DELETE /api/album/{id} with admin returns 200 {ok:true}. DELETE unknown id returns 404. DELETE without token returns 401.
+      (2) DETAILED INSPECTION REPORT: Created booking (status:paid). POST /api/inspections/{id}/inspection-report with complete=false stores detailed_report (grade:B), status remains 'paid'. 
+      POST with complete=true updates detailed_report (grade:A), status changes to 'completed'. GET /api/inspections/{id} confirms detailed_report persisted. 
+      Client token correctly denied (403) when attempting to POST inspection-report.
+      (3) SAAQ REGRESSION: Created booking without service_type field. Verified stored inspection.service_type = "Inspection PEP / Pré-achat" (no 'SAAQ' substring).
+      All new endpoints working correctly with proper authentication and authorization. No critical issues found.

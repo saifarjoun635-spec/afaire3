@@ -62,7 +62,7 @@ class BookingCreate(BaseModel):
     client_phone: str
     client_password: str
     # inspection
-    service_type: str = "Inspection PEP / SAAQ / Pré-achat"
+    service_type: str = "Inspection PEP / Pré-achat"
     vehicle_type: Optional[str] = "Automobile"
     vehicle_make: str
     vehicle_model: str
@@ -105,6 +105,16 @@ class QuoteCreate(BaseModel):
     vehicle_type: str = ""
     service: str = ""
     details: Optional[str] = ""
+
+
+class AlbumCreate(BaseModel):
+    image: str  # base64 data url (already cropped on client)
+    caption: Optional[str] = ""
+
+
+class DetailedReportInput(BaseModel):
+    report: dict
+    complete: bool = False
 
 
 # ---------------- Helpers ----------------
@@ -373,6 +383,52 @@ async def save_report(inspection_id: str, body: ReportInput, payload: dict = Dep
         {"id": inspection_id}, {"$set": {"report": report, "status": "completed"}}
     )
     return inspection_public(await db.inspections.find_one({"id": inspection_id}))
+
+
+@api_router.post("/inspections/{inspection_id}/inspection-report")
+async def save_detailed_report(inspection_id: str, body: DetailedReportInput, payload: dict = Depends(get_current_payload)):
+    if payload["role"] not in ("admin", "employee"):
+        raise HTTPException(status_code=403, detail="Accès non autorisé")
+    i = await db.inspections.find_one({"id": inspection_id})
+    if not i:
+        raise HTTPException(status_code=404, detail="Inspection introuvable")
+    data = dict(body.report)
+    data["updated_at"] = now_iso()
+    updates = {"detailed_report": data}
+    if body.complete:
+        updates["status"] = "completed"
+    await db.inspections.update_one({"id": inspection_id}, {"$set": updates})
+    return inspection_public(await db.inspections.find_one({"id": inspection_id}))
+
+
+# ---------------- Album (admin uploads, public view) ----------------
+@api_router.post("/album")
+async def add_album_image(body: AlbumCreate, _=Depends(require_roles("admin"))):
+    item = {
+        "id": str(uuid.uuid4()),
+        "data": body.image,
+        "caption": body.caption or "",
+        "created_at": now_iso(),
+    }
+    await db.album.insert_one(item)
+    item.pop("_id", None)
+    return item
+
+
+@api_router.get("/album")
+async def list_album():
+    items = await db.album.find().sort("created_at", -1).to_list(1000)
+    for it in items:
+        it.pop("_id", None)
+    return items
+
+
+@api_router.delete("/album/{image_id}")
+async def delete_album_image(image_id: str, _=Depends(require_roles("admin"))):
+    res = await db.album.delete_one({"id": image_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Image introuvable")
+    return {"ok": True}
 
 
 # ---------------- Quotes (landing form) ----------------

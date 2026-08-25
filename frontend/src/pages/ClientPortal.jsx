@@ -96,9 +96,20 @@ const ClientPortal = () => {
                   </div>
                 </div>
               )}
+              {selected.detailed_report && (
+                <div className="bg-[#0e0e10] border border-gold/30 rounded-lg p-4 space-y-3">
+                  <p className="text-gold font-heading text-sm flex items-center gap-1.5"><CheckCircle2 size={14} /> Rapport d'inspection détaillé</p>
+                  {selected.detailed_report.grade && (
+                    <p className="text-white/80 text-sm">Évaluation générale : <span className="font-heading text-white">Note {selected.detailed_report.grade}</span> • {selected.detailed_report.report_type}</p>
+                  )}
+                  {selected.detailed_report.summary?.strengths && (<div><p className="text-white/40 text-xs">Points forts</p><p className="text-white/70 text-sm">{selected.detailed_report.summary.strengths}</p></div>)}
+                  {selected.detailed_report.summary?.defects && (<div><p className="text-white/40 text-xs">Défauts prioritaires</p><p className="text-white/70 text-sm">{selected.detailed_report.summary.defects}</p></div>)}
+                  {selected.detailed_report.summary?.recommendation && (<div><p className="text-white/40 text-xs">Recommandation finale</p><p className="text-white/70 text-sm">{selected.detailed_report.summary.recommendation}</p></div>)}
+                </div>
+              )}
               {selected.report && (
                 <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <p className="text-green-300 font-heading text-sm flex items-center gap-1.5 mb-1"><CheckCircle2 size={14} /> Rapport d'inspection</p>
+                  <p className="text-green-300 font-heading text-sm flex items-center gap-1.5 mb-1"><CheckCircle2 size={14} /> Notes de l'inspecteur</p>
                   <p className="text-white/70 text-sm whitespace-pre-wrap">{selected.report.notes}</p>
                 </div>
               )}
