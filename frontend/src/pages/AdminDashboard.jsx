@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, ClipboardList, UserPlus, Trash2, Eye, EyeOff, Mail, Inbox, ClipboardCheck, TrendingUp, ImagePlus, Images, FileText } from 'lucide-react';
+import { LogOut, Users, ClipboardList, UserPlus, Trash2, Eye, EyeOff, Mail, Inbox, ClipboardCheck, TrendingUp, ImagePlus, Images, FileText, Bell } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { STATUS } from './ClientPortal';
 import logo from '../assets/logo.png';
 import ImageCropperModal from '../components/ImageCropperModal';
 import InspectionReportForm from '../components/InspectionReportForm';
+import ManualInspectionForm from '../components/ManualInspectionForm';
+import AlertsPanel from '../components/AlertsPanel';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -76,6 +78,7 @@ const AdminDashboard = () => {
     { k: 'credentials', label: 'Identifiants', icon: EyeOff },
     { k: 'quotes', label: 'Soumissions', icon: Inbox },
     { k: 'album', label: 'Album', icon: Images },
+    { k: 'alerts', label: 'Alertes', icon: Bell },
   ];
 
   const field = 'w-full bg-[#0e0e10] border border-white/12 rounded-md px-3 py-2.5 text-white text-sm focus:border-gold outline-none';
@@ -99,7 +102,7 @@ const AdminDashboard = () => {
 
         <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
           {tabs.map((t) => (
-            <button key={t.k} onClick={() => setTab(t.k)} className={`flex items-center gap-2 px-4 py-2.5 rounded-md font-heading text-sm whitespace-nowrap ${tab === t.k ? 'bg-gold text-white' : 'bg-[#141416] text-white/60 hover:text-white'}`}>
+            <button key={t.k} data-testid={`admin-tab-${t.k}`} onClick={() => setTab(t.k)} className={`flex items-center gap-2 px-4 py-2.5 rounded-md font-heading text-sm whitespace-nowrap ${tab === t.k ? 'bg-gold text-white' : 'bg-[#141416] text-white/60 hover:text-white'}`}>
               <t.icon size={16} /> {t.label}
             </button>
           ))}
@@ -107,15 +110,17 @@ const AdminDashboard = () => {
 
         {tab === 'inspections' && (
           <div className="space-y-4">
+            <ManualInspectionForm employees={employees} onCreated={loadAll} />
             {inspections.length === 0 && <p className="text-white/40 text-center py-10">Aucune inspection.</p>}
             {inspections.map((it) => (
               <div key={it.id} className="bg-[#141416] border border-white/10 rounded-xl p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-white/40 text-xs">#{it.ref}</span>
+                    <span className="text-white font-mono text-sm bg-white/5 px-2 py-0.5 rounded" data-testid={`admin-ref-${it.ref}`}>#{it.ref}</span>
+                    {it.manual && <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60">Manuel</span>}
                     <span className={`text-xs font-heading px-2.5 py-1 rounded-full ${STATUS[it.status]?.color}`}>{STATUS[it.status]?.label}</span>
                   </div>
-                  <span className="text-gold text-sm font-heading">{it.price} $ • payé</span>
+                  <span className="text-gold text-sm font-heading">{it.price} $ • {it.manual ? 'ajout manuel' : 'payé'}</span>
                 </div>
                 <div className="grid md:grid-cols-2 gap-x-6 gap-y-1 text-sm">
                   <p className="text-white">{it.vehicle.year} {it.vehicle.make} {it.vehicle.model}</p>
@@ -204,6 +209,8 @@ const AdminDashboard = () => {
             ))}
           </div>
         )}
+
+        {tab === 'alerts' && <AlertsPanel />}
 
         {tab === 'album' && (
           <div className="space-y-6">

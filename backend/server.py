@@ -1,4 +1,8 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi.responses import Response, RedirectResponse
+import base64
+import secrets
+import httpx
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -19,7 +23,10 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-app = FastAPI(title="Torque Élite API")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Torque Inspection Mobile API")
 api_router = APIRouter(prefix="/api")
 
 
@@ -112,6 +119,22 @@ class AlbumCreate(BaseModel):
     caption: Optional[str] = ""
 
 
+class ManualInspectionCreate(BaseModel):
+    client_name: str
+    client_phone: Optional[str] = ""
+    client_email: Optional[str] = ""
+    service_type: str = "Inspection Pré-achat"
+    vehicle_type: Optional[str] = "Automobile"
+    vehicle_make: str
+    vehicle_model: str
+    vehicle_year: Optional[str] = ""
+    vehicle_vin: Optional[str] = ""
+    location_address: Optional[str] = ""
+    notes: Optional[str] = ""
+    price: float = 0
+    employee_id: Optional[str] = None
+
+
 class DetailedReportInput(BaseModel):
     report: dict
     complete: bool = False
@@ -131,6 +154,29 @@ def user_public(u: dict, include_password=False):
     if include_password:
         data["password"] = u.get("password", "")
     return data
+
+
+REF_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+async def new_ref_code():
+    while True:
+        code = "".join(secrets.choice(REF_ALPHABET) for _ in range(5))
+        if not await db.inspections.find_one({"ref": code}):
+            return code
+
+
+async def send_alert(message: str):
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.post(f"https://ntfy.sh/{os.environ['NTFY_TOPIC']}", content=message.encode("utf-8"), headers={
+                "Title": "Nouvelle inspection - Torque Inspection Mobile", "Tags": "rotating_light,car", "Priority": "high",
+            })
+        res = {"success": r.status_code == 200, "status": r.status_code}
+    except Exception as e:
+        res = {"success": False, "error": str(e)}
+    await db.alert_log.insert_one({"id": str(uuid.uuid4()), "message": message, "result": res, "created_at": now_iso()})
+    logger.info(f"Alert result: {res}")
 
 
 async def get_user(user_id: str):
@@ -217,7 +263,7 @@ def inspection_public(i: dict):
 
 
 @api_router.post("/bookings")
-async def create_booking(body: BookingCreate):
+async def create_booking(body: BookingCreate, bg: BackgroundTasks):
     """Public: client books an inspection, creates/uses a client account, fake payment."""
     email = body.client_email.lower().strip()
     user = await db.users.find_one({"email": email})
@@ -241,7 +287,7 @@ async def create_booking(body: BookingCreate):
 
     inspection = {
         "id": str(uuid.uuid4()),
-        "ref": "TE-" + str(uuid.uuid4())[:6].upper(),
+        "ref": await new_ref_code(),
         "service_type": body.service_type,
         "status": "paid",  # fake payment succeeds immediately -> awaiting assignment
         "client_id": user["id"],
@@ -272,6 +318,7 @@ async def create_booking(body: BookingCreate):
         "accepted_at": None,
     }
     await db.inspections.insert_one(inspection)
+    bg.add_task(send_alert, f"Vous recevez une nouvelle inspection ! Ref {inspection['ref']} - {body.client_name} ({body.client_phone}) - {body.vehicle_year} {body.vehicle_make} {body.vehicle_model} - {body.service_type}")
     token = create_token(user["id"], "client")
     return {"token": token, "user": user_public(user), "inspection": inspection_public(inspection)}
 
@@ -288,6 +335,64 @@ async def list_inspections(payload: dict = Depends(get_current_payload)):
         q = {"client_id": uid}
     items = await db.inspections.find(q).sort("created_at", -1).to_list(1000)
     return [inspection_public(i) for i in items]
+
+
+@api_router.post("/inspections/manual")
+async def create_manual_inspection(body: ManualInspectionCreate, _=Depends(require_roles("admin"))):
+    emp = None
+    if body.employee_id:
+        emp = await get_user(body.employee_id)
+        if not emp or emp["role"] != "employee":
+            raise HTTPException(status_code=404, detail="Employé introuvable")
+    inspection = {
+        "id": str(uuid.uuid4()),
+        "ref": await new_ref_code(),
+        "service_type": body.service_type,
+        "status": "assigned" if emp else "paid",
+        "client_id": None,
+        "client": {"name": body.client_name, "email": (body.client_email or "").lower().strip(), "phone": body.client_phone or ""},
+        "vehicle": {"type": body.vehicle_type or "Automobile", "make": body.vehicle_make, "model": body.vehicle_model,
+                    "year": body.vehicle_year or "", "vin": body.vehicle_vin or ""},
+        "location": {"type": "Manual", "address": body.location_address or ""},
+        "contact": {"name": body.client_name, "phone": body.client_phone or ""},
+        "components": [],
+        "notes": body.notes or "",
+        "price": body.price,
+        "payment": {"status": "manual", "method": "Ajout manuel (patron)", "paid_at": None},
+        "manual": True,
+        "assigned_employee_id": emp["id"] if emp else None,
+        "assigned_employee_name": emp["name"] if emp else None,
+        "scheduled_at": None,
+        "photos": [],
+        "report": None,
+        "created_at": now_iso(),
+        "accepted_at": now_iso() if emp else None,
+    }
+    await db.inspections.insert_one(inspection)
+    return inspection_public(inspection)
+
+
+@api_router.get("/alerts/config")
+async def alerts_config(_=Depends(require_roles("admin"))):
+    topic = os.environ["NTFY_TOPIC"]
+    return {"topic": topic, "url": f"https://ntfy.sh/{topic}"}
+
+
+@api_router.post("/alerts/test")
+async def alerts_test(_=Depends(require_roles("admin"))):
+    await send_alert("Test : vos alertes Torque Inspection Mobile fonctionnent !")
+    return {"ok": True}
+
+
+@api_router.get("/lookup/{code}")
+async def lookup_inspection(code: str):
+    i = await db.inspections.find_one({"ref": code.strip().upper()})
+    if not i:
+        raise HTTPException(status_code=404, detail="Code de référence introuvable")
+    keys = ["ref", "service_type", "status", "vehicle", "assigned_employee_name", "photos", "detailed_report", "report", "components", "created_at"]
+    data = {k: i.get(k) for k in keys}
+    data["client"] = {"name": i.get("client", {}).get("name", "")}
+    return data
 
 
 @api_router.get("/inspections/available")
@@ -471,6 +576,19 @@ async def stats(_=Depends(require_roles("admin"))):
     }
 
 
+OG_FALLBACK = "https://images.unsplash.com/photo-1625047509248-ec889cbff17f?crop=entropy&cs=srgb&fm=jpg&w=1200&h=630&fit=crop&q=80"
+
+
+@api_router.get("/og-image")
+async def og_image():
+    item = await db.album.find_one(sort=[("created_at", -1)])
+    if not item or not item.get("data", "").startswith("data:"):
+        return RedirectResponse(OG_FALLBACK)
+    header, b64 = item["data"].split(",", 1)
+    mime = header[5:].split(";")[0] or "image/jpeg"
+    return Response(content=base64.b64decode(b64), media_type=mime, headers={"Cache-Control": "public, max-age=3600"})
+
+
 @api_router.get("/")
 async def root():
     return {"message": "Torque Élite API"}
@@ -486,8 +604,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 @app.on_event("startup")

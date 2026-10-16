@@ -21,6 +21,7 @@ const Booking = () => {
     notes: '', price: 149,
     card_name: '', card_number: '', card_exp: '', card_cvc: '',
   });
+  const [refCode, setRefCode] = useState('');
   const [components, setComponents] = useState([{ name: 'Other', description: '' }]);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -37,6 +38,7 @@ const Booking = () => {
       const payload = { ...form, price: Number(form.price), components: components.filter((c) => c.description) };
       const { data } = await api.post('/bookings', payload);
       setSession(data.token, data.user);
+      setRefCode(data.inspection.ref);
       setStep(4);
     } catch (err) {
       setError(err?.response?.data?.detail || 'Une erreur est survenue');
@@ -145,7 +147,12 @@ const Booking = () => {
             <CheckCircle2 className="text-gold mx-auto mb-4" size={52} />
             <h3 className="font-heading text-2xl text-white">Paiement confirmé !</h3>
             <p className="text-white/60 mt-2">Votre inspection a été enregistrée. Le patron va l'assigner à un inspecteur. Suivez son avancement dans votre portail.</p>
-            <button onClick={() => navigate('/portail')} className="mt-6 gold-gradient text-white font-heading font-600 px-8 py-3 rounded-sm">Accéder à mon portail</button>
+            <div className="mt-6 bg-[#0e0e10] border border-gold/30 rounded-lg p-5" data-testid="booking-ref-code-box">
+              <p className="text-white/50 text-xs font-heading tracking-widest">VOTRE CODE DE RÉFÉRENCE</p>
+              <p className="font-mono text-4xl text-white tracking-[0.3em] mt-2" data-testid="booking-ref-code">{refCode}</p>
+              <p className="text-white/50 text-xs mt-2">Conservez ce code : entrez-le sur notre site (section « Consultez votre rapport ») pour voir votre rapport sans vous connecter.</p>
+            </div>
+            <button onClick={() => navigate('/portail')} data-testid="booking-go-portal" className="mt-6 gold-gradient text-white font-heading font-600 px-8 py-3 rounded-sm">Accéder à mon portail</button>
           </div>
         )}
       </div>

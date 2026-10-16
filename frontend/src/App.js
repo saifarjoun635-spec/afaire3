@@ -9,6 +9,7 @@ import ClientPortal from "./pages/ClientPortal";
 import AdminDashboard from "./pages/AdminDashboard";
 import EmployeeApp from "./pages/EmployeeApp";
 import Album from "./pages/Album";
+import ReportLookup from "./pages/ReportLookup";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/reserver" element={<Booking />} />
             <Route path="/album" element={<Album />} />
+            <Route path="/rapport/:code" element={<ReportLookup />} />
             <Route path="/portail" element={<ProtectedRoute roles={["client"]}><ClientPortal /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/employe" element={<ProtectedRoute roles={["employee"]}><EmployeeApp /></ProtectedRoute>} />

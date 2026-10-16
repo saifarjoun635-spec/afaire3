@@ -4,6 +4,7 @@ import Hero from '../components/landing/Hero';
 import Services from '../components/landing/Services';
 import BusinessCards from '../components/landing/BusinessCards';
 import QuoteForm from '../components/landing/QuoteForm';
+import RefLookup from '../components/landing/RefLookup';
 import { Zap, MapPin, FileText, Phone } from 'lucide-react';
 import logo from '../assets/logo.png';
 
@@ -30,6 +31,7 @@ const Landing = () => (
         ))}
       </div>
     </section>
+    <RefLookup />
     <Services />
     <BusinessCards />
     <QuoteForm />
@@ -37,7 +39,7 @@ const Landing = () => (
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         <img src={logo} alt="Torque Inspection Mobile" className="h-12 w-auto" />
         <a href="tel:5148201136" className="flex items-center gap-2 text-white/80 hover:text-gold"><Phone size={16} className="text-[#E11D2E]" /> 514 820 1136</a>
-        <p className="text-white/40 text-sm">© {new Date().getFullYear()} Torque Élite Mécanique Inc. — Montréal</p>
+        <p className="text-white/40 text-sm">© {new Date().getFullYear()} Torque Inspection Mobile — Montréal</p>
       </div>
     </footer>
   </div>
